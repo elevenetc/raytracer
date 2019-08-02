@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.elevenetc.raytracer.debug.DebugMenu;
+import com.elevenetc.raytracer.views.BackgroundRayTracerView;
 import com.elevenetc.raytracer.views.RayTraceView;
 import com.elevenetc.raytracer.views.RealTimeRayTracerView;
 
@@ -20,8 +21,8 @@ public class RayTracerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        view = new RealTimeRayTracerView(this);
-//        view = new BackgroundRayTracerView(this);
+//        view = new RealTimeRayTracerView(this);
+        view = new BackgroundRayTracerView(this);
         setContentView((View) view);
 
         new DebugMenu.Builder()

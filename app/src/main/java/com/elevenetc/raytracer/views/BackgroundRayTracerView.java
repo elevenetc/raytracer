@@ -94,7 +94,6 @@ public class BackgroundRayTracerView extends View implements RayTraceView {
             initLight(cx, cy);
 
             renderThread = new RenderThread(tracer, scene, drawer, light, canvas, () -> post(this::invalidate));
-            renderThread.start();
         }
     }
 

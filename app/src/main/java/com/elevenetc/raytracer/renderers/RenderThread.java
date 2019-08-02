@@ -6,9 +6,10 @@ import android.graphics.Color;
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.drawers.Drawer;
 import com.elevenetc.raytracer.lights.Light;
+import com.elevenetc.raytracer.scheduling.TracingPool;
 import com.elevenetc.raytracer.tracers.RayTracer;
 
-public class RenderThread extends Thread {
+public class RenderThread {
 
     private RayTracer tracer;
     private Scene scene;
@@ -17,8 +18,7 @@ public class RenderThread extends Thread {
     private final Canvas canvas;
     private ReadyListener listener;
     private volatile boolean isDrawing;
-
-    private final Object lock = new Object();
+    private TracingPool tracingPool = new TracingPool(4);
 
     public RenderThread(
             RayTracer tracer,
@@ -33,6 +33,15 @@ public class RenderThread extends Thread {
         this.light = light;
         this.canvas = canvas;
         this.listener = listener;
+
+        tracingPool.setHandler(new TracingPool.CompleteHandler() {
+            @Override
+            public void onReadyForRendering() {
+                drawer.draw(light, canvas);
+                listener.onRendered();
+                isDrawing = false;
+            }
+        });
     }
 
     public boolean isDrawing() {
@@ -42,29 +51,9 @@ public class RenderThread extends Thread {
     public void draw() {
         if (!isDrawing) {
             isDrawing = true;
-            synchronized (lock) {
-                lock.notify();
-            }
-        }
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            tracer.trace(light, scene);
             canvas.drawColor(Color.BLACK);
-            drawer.draw(light, canvas);
-            listener.onRendered();
-            try {
-                isDrawing = false;
-                synchronized (lock) {
-                    lock.wait();
-                }
-            } catch (InterruptedException e) {
-                //ignore
-            }
+            tracingPool.requestTracing(light, scene, tracer);
         }
-
     }
 
 }

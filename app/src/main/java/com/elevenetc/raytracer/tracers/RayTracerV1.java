@@ -29,7 +29,8 @@ public class RayTracerV1 implements RayTracer {
             trace(ray, scene);
     }
 
-    private void trace(Ray ray, Scene scene) {
+    @Override
+    public void trace(Ray ray, Scene scene) {
         ray.reset();
         traceInternal(ray, ray.initSegment, scene, 0, ray.initSegment.color);
     }
