@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.lights.Light;
-import com.elevenetc.raytracer.tracers.RayTracer;
 import com.elevenetc.raytracer.tracers.TracerFactory;
 import com.elevenetc.raytracer.utils.Timer;
 
@@ -17,7 +16,7 @@ public class TracingPool {
     private int size;
     private List<TracingThread> threads = new ArrayList<>();
     private volatile AtomicInteger working = new AtomicInteger();
-    private CompleteHandler handler;
+    private Listener listener;
 
     public TracingPool(int size) {
 
@@ -29,8 +28,8 @@ public class TracingPool {
         }
     }
 
-    public void setHandler(CompleteHandler handler) {
-        this.handler = handler;
+    public void setListener(Listener listener) {
+        this.listener = listener;
     }
 
     public void requestTracing(Light light,
@@ -53,7 +52,7 @@ public class TracingPool {
 
     private void onCompleted() {
         if (working.decrementAndGet() == 0) {
-            handler.onReadyForRendering();
+            listener.onReadyForRendering();
         }
     }
 
@@ -87,9 +86,17 @@ public class TracingPool {
                         lock.wait();
                     }
                     updateState(State.TRACING);
+
+
                     timer.start();
+
+                    pool.listener.onStart(id, timer.start);
+
                     task.run();
                     timer.stop();
+
+                    pool.listener.onEnd(id, timer.start, timer.end);
+
                     updateState(State.DONE);
                     pool.onCompleted();
                 } catch (InterruptedException e) {
@@ -108,7 +115,11 @@ public class TracingPool {
         }
     }
 
-    public interface CompleteHandler {
+    public interface Listener {
+        void onStart(int coreIdx, long start);
+
+        void onEnd(int coreIdx, long start, long end);
+
         void onReadyForRendering();
     }
 }

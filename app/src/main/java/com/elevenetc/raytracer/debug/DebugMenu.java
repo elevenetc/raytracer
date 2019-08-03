@@ -19,6 +19,7 @@ import java.util.List;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.elevenetc.raytracer.utils.ViewUtils.dpToPx;
 
 public class DebugMenu {
 
@@ -48,6 +49,11 @@ public class DebugMenu {
 
         public Builder addCheckBox(String text, boolean checked, CheckBoxItem.Listener listener) {
             items.add(new CheckBoxItem(text, checked, listener));
+            return this;
+        }
+
+        public Builder addView(MenuItem item) {
+            items.add(item);
             return this;
         }
 
@@ -82,7 +88,7 @@ public class DebugMenu {
             btnClose = new TextView(activity);
             btnClose.setText("Debug menu");
 
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP_CONTENT, (int) dpToPx(25));
             lp.gravity = Gravity.RIGHT;
 
             itemsContainer.addView(btnClose, lp);
@@ -120,7 +126,7 @@ public class DebugMenu {
 
         private void init() {
             setOrientation(VERTICAL);
-            setBackgroundColor(Color.BLUE);
+            setBackgroundColor(Color.WHITE);
         }
     }
 }

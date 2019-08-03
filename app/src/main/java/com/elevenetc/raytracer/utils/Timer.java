@@ -2,9 +2,15 @@ package com.elevenetc.raytracer.utils;
 
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class Timer {
+
     private String tag;
-    private long start;
+    public long start;
+    public long end;
+    private SimpleDateFormat format = new SimpleDateFormat("mm:ss.SSS");//yyyy-MM-dd HH:
 
     public Timer(String tag) {
 
@@ -16,7 +22,10 @@ public class Timer {
     }
 
     public void stop() {
-        long end = System.currentTimeMillis();
-        Log.d("timer-" + tag, (end - start) + "ms");
+        end = System.currentTimeMillis();
+        long duration = end - start;
+        String startStr = this.format.format(new Date(start));
+        String endStr = this.format.format(new Date(end));
+        Log.d("timer-" + tag, "duration: " + duration + "ms" + " from:" + startStr + " to: " + endStr);
     }
 }

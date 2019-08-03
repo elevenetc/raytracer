@@ -34,6 +34,7 @@ public class BackgroundRayTracerView extends View implements RayTraceView {
     private Bitmap bitmap;
     private Paint paint = new Paint();
     private RenderThread renderThread;
+    private RenderThread.CoresListener coresListener;
 
     public BackgroundRayTracerView(Context context) {
         super(context);
@@ -83,6 +84,10 @@ public class BackgroundRayTracerView extends View implements RayTraceView {
 
     }
 
+    public void setCoresListener(RenderThread.CoresListener coresListener) {
+        this.coresListener = coresListener;
+    }
+
     private void preRenderInit(int width, int height) {
         if (!initRender) {
             initRender = true;
@@ -94,13 +99,14 @@ public class BackgroundRayTracerView extends View implements RayTraceView {
             initLight(cx, cy);
 
             renderThread = new RenderThread(tracer, scene, drawer, light, canvas, () -> post(this::invalidate));
+            renderThread.setCoresListener(coresListener);
         }
     }
 
     private void initLight(double cx, double cy) {
 //        light = new SingleRayLight(cx, cy, cx + 500, cy, Color.WHITE);
 //        light = new PlaneLight(cx, cy, cx + 800, cy, spotSize, Color.WHITE, 6000);
-        light = new ConeLight(cx, cy, cx + 800, cy, Color.WHITE, 1000, math);
+        light = new ConeLight(cx, cy, cx + 800, cy, Color.WHITE, 10000, math);
         light.setBrightness(.07f);
         lightController = new DirectedLightController((DirectedLight) light);
     }

@@ -10,7 +10,7 @@ import com.elevenetc.raytracer.math.RayMathV1;
 import com.elevenetc.raytracer.scheduling.TracingPool;
 import com.elevenetc.raytracer.tracers.RayTracer;
 import com.elevenetc.raytracer.tracers.RayTracerV1;
-import com.elevenetc.raytracer.tracers.TracerFactory;
+import com.elevenetc.raytracer.utils.Timer;
 
 public class RenderThread {
 
@@ -21,7 +21,10 @@ public class RenderThread {
     private final Canvas canvas;
     private ReadyListener listener;
     private volatile boolean isDrawing;
-    private TracingPool tracingPool = new TracingPool(2);
+    private int cores = Runtime.getRuntime().availableProcessors();
+    private TracingPool tracingPool = new TracingPool(cores);
+    private Timer timer = new Timer("total-work");
+    private CoresListener coresListener;
 
     public RenderThread(
             RayTracer tracer,
@@ -37,14 +40,30 @@ public class RenderThread {
         this.canvas = canvas;
         this.listener = listener;
 
-        tracingPool.setHandler(new TracingPool.CompleteHandler() {
+        tracingPool.setListener(new TracingPool.Listener() {
+
+            @Override
+            public void onStart(int coreIdx, long start) {
+                coresListener.onStartCore(coreIdx, start);
+            }
+
+            @Override
+            public void onEnd(int coreIdx, long start, long end) {
+                coresListener.onEndCore(coreIdx, start, end);
+            }
+
             @Override
             public void onReadyForRendering() {
+                timer.stop();
                 drawer.draw(light, canvas);
                 listener.onRendered();
                 isDrawing = false;
             }
         });
+    }
+
+    public void setCoresListener(CoresListener coresListener) {
+        this.coresListener = coresListener;
     }
 
     public boolean isDrawing() {
@@ -55,8 +74,16 @@ public class RenderThread {
         if (!isDrawing) {
             isDrawing = true;
             canvas.drawColor(Color.BLACK);
+            timer.start();
             tracingPool.requestTracing(light, scene, () -> new RayTracerV1(new RayMathV1()));
         }
+    }
+
+
+
+    public interface CoresListener {
+        void onStartCore(int coreIdx, long time);
+        void onEndCore(int coreIdx, long time, long end);
     }
 
 }
