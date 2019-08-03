@@ -99,7 +99,9 @@ public class CoresViewer extends MenuItem {
             for (int i = 0; i < cores; i++) {
                 CoreView child = new CoreView(getContext());
                 views[i] = child;
-                addView(child);
+                LayoutParams lp = new LayoutParams(0, LayoutParams.WRAP_CONTENT);
+                lp.weight = 1;
+                addView(child, lp);
             }
         }
 
