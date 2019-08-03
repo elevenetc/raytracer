@@ -1,8 +1,12 @@
 package com.elevenetc.raytracer.scheduling;
 
+import android.util.Log;
+
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.lights.Light;
 import com.elevenetc.raytracer.tracers.RayTracer;
+import com.elevenetc.raytracer.tracers.TracerFactory;
+import com.elevenetc.raytracer.utils.Timer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +35,7 @@ public class TracingPool {
 
     public void requestTracing(Light light,
                                Scene scene,
-                               RayTracer tracer) {
+                               TracerFactory tracerFactory) {
 
         if (working.get() > 0) return;
 
@@ -41,7 +45,7 @@ public class TracingPool {
         int from = 0;
         int to = batchSize;
         for (TracingThread thread : threads) {
-            thread.submit(new TracingTask(from, to, light, scene, tracer));
+            thread.submit(new TracingTask(from, to, light, scene, tracerFactory.create()));
             from = to;
             to = from + batchSize;
         }
@@ -60,10 +64,12 @@ public class TracingPool {
         private volatile State state = State.IDLE;
         private int id;
         private TracingPool pool;
+        private Timer timer;
 
         public TracingThread(int id, TracingPool pool) {
             this.id = id;
             this.pool = pool;
+            timer = new Timer(String.valueOf(id));
         }
 
         public void submit(TracingTask task) {
@@ -80,14 +86,21 @@ public class TracingPool {
                     synchronized (lock) {
                         lock.wait();
                     }
-                    state = State.TRACING;
+                    updateState(State.TRACING);
+                    timer.start();
                     task.run();
-                    state = State.DONE;
+                    timer.stop();
+                    updateState(State.DONE);
                     pool.onCompleted();
                 } catch (InterruptedException e) {
 
                 }
             }
+        }
+
+        private void updateState(State state) {
+            Log.d("tracing-thread", state.toString());
+            this.state = state;
         }
 
         enum State {

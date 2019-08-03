@@ -6,8 +6,11 @@ import android.graphics.Color;
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.drawers.Drawer;
 import com.elevenetc.raytracer.lights.Light;
+import com.elevenetc.raytracer.math.RayMathV1;
 import com.elevenetc.raytracer.scheduling.TracingPool;
 import com.elevenetc.raytracer.tracers.RayTracer;
+import com.elevenetc.raytracer.tracers.RayTracerV1;
+import com.elevenetc.raytracer.tracers.TracerFactory;
 
 public class RenderThread {
 
@@ -18,7 +21,7 @@ public class RenderThread {
     private final Canvas canvas;
     private ReadyListener listener;
     private volatile boolean isDrawing;
-    private TracingPool tracingPool = new TracingPool(4);
+    private TracingPool tracingPool = new TracingPool(2);
 
     public RenderThread(
             RayTracer tracer,
@@ -52,7 +55,7 @@ public class RenderThread {
         if (!isDrawing) {
             isDrawing = true;
             canvas.drawColor(Color.BLACK);
-            tracingPool.requestTracing(light, scene, tracer);
+            tracingPool.requestTracing(light, scene, () -> new RayTracerV1(new RayMathV1()));
         }
     }
 
