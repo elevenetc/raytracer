@@ -8,15 +8,15 @@ import com.elevenetc.raytracer.tracers.TracerFactory;
 import com.elevenetc.raytracer.utils.Timer;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class TracingPool {
 
     private int size;
     private List<TracingThread> threads = new ArrayList<>();
-    private volatile AtomicInteger working = new AtomicInteger();
     private Listener listener;
+    private LinkedList<TracingTask> tasksStack = new LinkedList<>();
 
     public TracingPool(int size) {
 
@@ -36,23 +36,43 @@ public class TracingPool {
                                Scene scene,
                                TracerFactory tracerFactory) {
 
-        if (working.get() > 0) return;
+        if (!tasksStack.isEmpty()) return;
 
-        working.set(threads.size());
 
-        int batchSize = light.rays.size() / this.size;
+        int tasks = 16;
+        int batchSize = light.rays.size() / tasks;
         int from = 0;
         int to = batchSize;
-        for (TracingThread thread : threads) {
+
+        for (int i = 0; i < threads.size(); i++) {
+            tasks--;
+            TracingThread thread = threads.get(i);
             thread.submit(new TracingTask(from, to, light, scene, tracerFactory.create()));
             from = to;
             to = from + batchSize;
         }
+
+        while (tasks > 0) {
+            tasksStack.add(new TracingTask(from, to, light, scene, tracerFactory.create()));
+            from = to;
+            to = from + batchSize;
+            tasks--;
+        }
     }
 
     private void onCompleted() {
-        if (working.decrementAndGet() == 0) {
+
+        if (tasksStack.isEmpty()) {
             listener.onReadyForRendering();
+        } else {
+            for (int i = 0; i < threads.size(); i++) {
+                TracingThread thread = threads.get(i);
+                if (thread.state == TracingThread.State.DONE) {
+                    TracingTask task = tasksStack.removeFirst();
+                    thread.submit(task);
+                    break;
+                }
+            }
         }
     }
 
