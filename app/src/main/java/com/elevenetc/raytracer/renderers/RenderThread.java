@@ -43,12 +43,12 @@ public class RenderThread {
         tracingPool.setListener(new TracingPool.Listener() {
 
             @Override
-            public void onStart(int coreIdx, long start) {
+            public void onStart(String coreIdx, long start) {
                 coresListener.onStartCore(coreIdx, start);
             }
 
             @Override
-            public void onEnd(int coreIdx, long start, long end) {
+            public void onEnd(String coreIdx, long start, long end) {
                 coresListener.onEndCore(coreIdx, start, end);
             }
 
@@ -82,8 +82,8 @@ public class RenderThread {
 
 
     public interface CoresListener {
-        void onStartCore(int coreIdx, long time);
-        void onEndCore(int coreIdx, long time, long end);
+        void onStartCore(String coreIdx, long time);
+        void onEndCore(String coreIdx, long time, long end);
     }
 
 }

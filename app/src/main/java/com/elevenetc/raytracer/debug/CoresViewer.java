@@ -11,6 +11,8 @@ import com.elevenetc.raytracer.utils.ViewUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CoresViewer extends MenuItem {
 
@@ -33,19 +35,19 @@ public class CoresViewer extends MenuItem {
 
         private int coresAmount;
         private CoresView view;
-        private CoreInfo[] coreInfos;
+        private Map<String, CoreInfo> coreInfos;
 
         public Binder(int coresAmount) {
             this.coresAmount = coresAmount;
-            coreInfos = new CoreInfo[coresAmount];
+            coreInfos = new HashMap<>();
         }
 
         public int coresAmount() {
             return coresAmount;
         }
 
-        public void updateCore(int i, CoreInfo info) {
-            coreInfos[i] = info;
+        public void updateCore(String i, CoreInfo info) {
+            coreInfos.put(i, info);
             view.updateCore(i, info);
         }
 
@@ -69,16 +71,16 @@ public class CoresViewer extends MenuItem {
 
     private static class CoresView extends LinearLayout {
 
-        private CoreView[] views;
+        private Map<String, CoreView> views;
 
         public CoresView(Context context) {
             super(context);
             setOrientation(LinearLayout.HORIZONTAL);
         }
 
-        public void updateCore(int i, Binder.CoreInfo info) {
+        public void updateCore(String i, Binder.CoreInfo info) {
 
-            CoreView view = views[i];
+            CoreView view = views.get(i);
             view.setState(info.state);
 
             if (info.state == Binder.CoreInfo.State.IDLE) {
@@ -94,11 +96,11 @@ public class CoresViewer extends MenuItem {
 
         public void initViews(int cores) {
 
-            views = new CoreView[cores];
+            views = new HashMap<>();
 
             for (int i = 0; i < cores; i++) {
                 CoreView child = new CoreView(getContext());
-                views[i] = child;
+                views.put(String.valueOf(i), child);
                 LayoutParams lp = new LayoutParams(0, LayoutParams.WRAP_CONTENT);
                 lp.weight = 1;
                 addView(child, lp);
@@ -111,9 +113,11 @@ public class CoresViewer extends MenuItem {
 
         private View stateView;
         private TextView textStart;
+        private TextView jobsDone;
         private TextView textEnd;
         private TextView textTotalTime;
         private SimpleDateFormat format = new SimpleDateFormat("mm:ss.SSS");
+        private int jobsDoneCounter;
 
         public CoreView(Context context) {
             super(context);
@@ -124,10 +128,12 @@ public class CoresViewer extends MenuItem {
             stateView.setLayoutParams(new LinearLayout.LayoutParams((int) ViewUtils.dpToPx(10), (int) ViewUtils.dpToPx(10)));
 
             textStart = new TextView(context);
+            jobsDone = new TextView(context);
             textEnd = new TextView(context);
             textTotalTime = new TextView(context);
 
             addView(stateView);
+            addView(jobsDone);
             addView(textStart);
             addView(textEnd);
             addView(textTotalTime);
@@ -152,7 +158,9 @@ public class CoresViewer extends MenuItem {
                 textEnd.setText("end: " + format.format(new Date(end)));
             }
 
+            jobsDoneCounter++;
 
+            jobsDone.setText(String.valueOf(jobsDoneCounter));
         }
 
         public void setTotal(long start) {

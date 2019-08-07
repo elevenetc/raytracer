@@ -25,11 +25,11 @@ public class RayTracerActivity extends AppCompatActivity {
         view = new BackgroundRayTracerView(this);
         setContentView((View) view);
 
-        CoresViewer.Binder binder = new CoresViewer.Binder(8);
+        CoresViewer.Binder binder = new CoresViewer.Binder(Runtime.getRuntime().availableProcessors());
 
         view.setCoresListener(new RenderThread.CoresListener() {
             @Override
-            public void onStartCore(int coreIdx, long time) {
+            public void onStartCore(String coreIdx, long time) {
 
                 view.post(new Runnable() {
                     @Override
@@ -41,7 +41,7 @@ public class RayTracerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onEndCore(int coreIdx, long start, long end) {
+            public void onEndCore(String coreIdx, long start, long end) {
                 view.post(new Runnable() {
                     @Override
                     public void run() {

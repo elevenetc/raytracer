@@ -13,23 +13,37 @@ public class TracingTask implements Runnable {
     private final Light light;
     private final Scene scene;
     private final RayTracer tracer;
+    private OnFinished onFinished;
+    private TracingPool.Listener listener;
 
     public TracingTask(int from, int to,
                        Light light,
                        Scene scene,
-                       RayTracer tracer) {
+                       RayTracer tracer,
+                       OnFinished onFinished, TracingPool.Listener listener) {
 
         this.from = from;
         this.to = to - 1;
         this.light = light;
         this.scene = scene;
         this.tracer = tracer;
+        this.onFinished = onFinished;
+        this.listener = listener;
     }
 
     @Override
     public void run() {
 
-        Log.d("tracing-task", "starting: " + from + " - " + to);
+
+        String threadName = Thread.currentThread().getName();
+
+        Log.d("tracing-task", "starting: " + threadName);
+        //Log.d("tracing-task", "starting: " + from + " - " + to);
+
+
+        long start = System.currentTimeMillis();
+
+        listener.onStart(threadName, start);
 
         for (int i = 0; i < light.rays.size(); i++) {
             if (i >= from && i <= to) {
@@ -37,6 +51,15 @@ public class TracingTask implements Runnable {
             }
         }
 
-        Log.d("tracing-task", "finished: " + from + " - " + to);
+        listener.onEnd(threadName, start, System.currentTimeMillis());
+
+        onFinished.onFinished();
+
+        //Log.d("tracing-task", "finished: " + from + " - " + to);
+        Log.d("tracing-task", "finished: " + threadName);
+    }
+
+    interface OnFinished {
+        void onFinished();
     }
 }

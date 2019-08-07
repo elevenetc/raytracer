@@ -1,31 +1,38 @@
 package com.elevenetc.raytracer.scheduling;
 
-import android.util.Log;
-
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.lights.Light;
 import com.elevenetc.raytracer.tracers.TracerFactory;
-import com.elevenetc.raytracer.utils.Timer;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TracingPool {
 
     private int size;
-    private List<TracingThread> threads = new ArrayList<>();
     private Listener listener;
-    private LinkedList<TracingTask> tasksStack = new LinkedList<>();
+    private ExecutorService pool;
+    private AtomicInteger counter = new AtomicInteger(0);
 
     public TracingPool(int size) {
 
         this.size = size;
 
-        for (int i = 0; i < size; i++) {
-            threads.add(new TracingThread(i, this));
-            threads.get(i).start();
-        }
+        pool = Executors.newFixedThreadPool(size, new ThreadFactory() {
+
+            int threadId;
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setName(threadId + "");
+                threadId++;
+                return thread;
+            }
+        });
+
     }
 
     public void setListener(Listener listener) {
@@ -36,109 +43,33 @@ public class TracingPool {
                                Scene scene,
                                TracerFactory tracerFactory) {
 
-        if (!tasksStack.isEmpty()) return;
+        if (counter.get() > 0) return;
 
 
-        int tasks = 16;
+        int tasks = size * 4;
         int batchSize = light.rays.size() / tasks;
         int from = 0;
         int to = batchSize;
 
-        for (int i = 0; i < threads.size(); i++) {
-            tasks--;
-            TracingThread thread = threads.get(i);
-            thread.submit(new TracingTask(from, to, light, scene, tracerFactory.create()));
+        counter = new AtomicInteger(tasks);
+
+        TracingTask.OnFinished onFinished = () -> {
+            if (counter.decrementAndGet() == 0) {
+                listener.onReadyForRendering();
+            }
+        };
+
+        for (int i = 0; i < tasks; i++) {
+            pool.submit(new TracingTask(from, to, light, scene, tracerFactory.create(), onFinished, listener));
             from = to;
             to = from + batchSize;
-        }
-
-        while (tasks > 0) {
-            tasksStack.add(new TracingTask(from, to, light, scene, tracerFactory.create()));
-            from = to;
-            to = from + batchSize;
-            tasks--;
-        }
-    }
-
-    private void onCompleted() {
-
-        if (tasksStack.isEmpty()) {
-            listener.onReadyForRendering();
-        } else {
-            for (int i = 0; i < threads.size(); i++) {
-                TracingThread thread = threads.get(i);
-                if (thread.state == TracingThread.State.DONE) {
-                    TracingTask task = tasksStack.removeFirst();
-                    thread.submit(task);
-                    break;
-                }
-            }
-        }
-    }
-
-    static class TracingThread extends Thread {
-
-        private Object lock = new Object();
-        private volatile TracingTask task;
-        private volatile State state = State.IDLE;
-        private int id;
-        private TracingPool pool;
-        private Timer timer;
-
-        public TracingThread(int id, TracingPool pool) {
-            this.id = id;
-            this.pool = pool;
-            timer = new Timer(String.valueOf(id));
-        }
-
-        public void submit(TracingTask task) {
-            this.task = task;
-            synchronized (lock) {
-                lock.notify();
-            }
-        }
-
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    synchronized (lock) {
-                        lock.wait();
-                    }
-                    updateState(State.TRACING);
-
-
-                    timer.start();
-
-                    pool.listener.onStart(id, timer.start);
-
-                    task.run();
-                    timer.stop();
-
-                    pool.listener.onEnd(id, timer.start, timer.end);
-
-                    updateState(State.DONE);
-                    pool.onCompleted();
-                } catch (InterruptedException e) {
-
-                }
-            }
-        }
-
-        private void updateState(State state) {
-            Log.d("tracing-thread", state.toString());
-            this.state = state;
-        }
-
-        enum State {
-            IDLE, TRACING, DONE
         }
     }
 
     public interface Listener {
-        void onStart(int coreIdx, long start);
+        void onStart(String coreIdx, long start);
 
-        void onEnd(int coreIdx, long start, long end);
+        void onEnd(String coreIdx, long start, long end);
 
         void onReadyForRendering();
     }
