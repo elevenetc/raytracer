@@ -8,6 +8,7 @@ import com.elevenetc.raytracer.edges.Edge;
 import com.elevenetc.raytracer.geometry.Point;
 import com.elevenetc.raytracer.geometry.Segment;
 import com.elevenetc.raytracer.shapes.Shape;
+import com.elevenetc.raytracer.tracers.TracingObjectsPool;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -118,7 +119,7 @@ public class RayMathV1 implements RayMath {
     public Intersection getIntersectionByNormal(Segment ray, Edge edge) {
 
         //TODO: cache
-        Intersection result = new Intersection();
+        Intersection result = TracingObjectsPool.get();
 
         if (edge.leftSide().hasNormal()) {
             if (dotProduct(ray, edge.leftSide().normal()) < 0) {

@@ -106,7 +106,7 @@ public class BackgroundRayTracerView extends View implements RayTraceView {
     private void initLight(double cx, double cy) {
 //        light = new SingleRayLight(cx, cy, cx + 500, cy, Color.WHITE);
 //        light = new PlaneLight(cx, cy, cx + 800, cy, spotSize, Color.WHITE, 6000);
-        light = new ConeLight(cx, cy, cx + 800, cy, Color.WHITE, 20000, math);
+        light = new ConeLight(cx, cy, cx + 400, cy, Color.WHITE, 5000, math);
         light.setBrightness(.07f);
         lightController = new DirectedLightController((DirectedLight) light);
     }

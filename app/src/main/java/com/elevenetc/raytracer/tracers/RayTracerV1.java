@@ -37,7 +37,9 @@ public class RayTracerV1 implements RayTracer {
 
     private void traceInternal(Ray ray, RaySegment initSegment, Scene scene, double currentLength, int prevColor) {
 
-        if (currentLength >= ray.length) return;
+        if (currentLength >= ray.length) {
+            return;
+        }
 
         Intersection intersection = math.getClosestIntersection(initSegment, scene);
 
@@ -61,6 +63,7 @@ public class RayTracerV1 implements RayTracer {
 
             //continue tracing
             traceInternal(ray, rotateInitVector(initSegment, intersection), scene, currentLength, intersection.hasOutColor ? intersection.outColor : prevColor);
+
         } else if (currentLength < ray.length) {//no intersection but light still has energy
 
             RaySegment newSegment = new RaySegment(initSegment);
@@ -71,6 +74,8 @@ public class RayTracerV1 implements RayTracer {
 
             ray.reflectedOrRefracted().add(newSegment);
         }
+
+        TracingObjectsPool.put(intersection);
     }
 
     private void setColor(int prevColor, Intersection intersection, RaySegment newSegment) {
