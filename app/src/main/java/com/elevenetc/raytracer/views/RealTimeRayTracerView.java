@@ -12,8 +12,12 @@ import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.drawers.DebugDrawer;
 import com.elevenetc.raytracer.drawers.Drawer;
 import com.elevenetc.raytracer.drawers.InterferenceDrawer;
-import com.elevenetc.raytracer.drawers.SpotDrawer;
-import com.elevenetc.raytracer.lights.*;
+import com.elevenetc.raytracer.lights.ConeLight;
+import com.elevenetc.raytracer.lights.DirectedLight;
+import com.elevenetc.raytracer.lights.DirectedLightController;
+import com.elevenetc.raytracer.lights.Light;
+import com.elevenetc.raytracer.lights.LightController;
+import com.elevenetc.raytracer.lights.PlaneLight;
 import com.elevenetc.raytracer.math.RayMath;
 import com.elevenetc.raytracer.math.RayMathV1;
 import com.elevenetc.raytracer.tracers.RayTracer;
@@ -28,7 +32,7 @@ public class RealTimeRayTracerView extends View implements RayTraceView {
 
     private Scene scene;
     private Drawer debugDrawer = new DebugDrawer();
-//    private Drawer drawer = new SpotDrawer();
+    //    private Drawer drawer = new SpotDrawer();
     private Drawer drawer = new InterferenceDrawer();
     private RayMath math = new RayMathV1();
     private RayTracer tracer = new RayTracerV1(math);
@@ -78,10 +82,12 @@ public class RealTimeRayTracerView extends View implements RayTraceView {
             double cx = width / 2;
             double cy = height / 2;
 
-            //scene = Scenes.justVertical(width, height);
+//            scene = Scenes.curvePath(width, height, 0, 0);
 //            scene = Scenes.justVerticalTransparent(width, height);
-//            scene = Scenes.basicPrism(width, height);
-            scene = Scenes.basicLens(width, height);
+            scene = Scenes.basicPrism(width, height);
+//            scene = Scenes.basicLens(width, height);
+//            scene = Scenes.randomSquares(width, height);
+
             initLight(cx, cy);
         }
     }
@@ -100,8 +106,8 @@ public class RealTimeRayTracerView extends View implements RayTraceView {
 
     private void initLight(double cx, double cy) {
 //        light = new SingleRayLight(cx, cy, cx, cy + 450, Color.WHITE);
-        light = new ConeLight(cx, cy, cx + 400, cy + 400, Color.WHITE, 100, math);
-//        light = new PlaneLight(cx, cy, cx + 500, cy, 2, Color.WHITE, 80, math);
+        light = new ConeLight(cx, cy, cx + 700, cy + 700, Color.WHITE, 100, math);
+//        light = new PlaneLight(cx, cy, cx + 1000, cy, 2, Color.WHITE, 80, math);
 //        light = new PointLight(cx, cy, 300, 50);
 //        lightController = new UndirectedLightController(light);
         light.setBrightness(0.05f);

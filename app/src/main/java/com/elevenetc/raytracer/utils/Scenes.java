@@ -1,8 +1,11 @@
 package com.elevenetc.raytracer.utils;
 
 
+import android.graphics.Color;
+
 import com.elevenetc.raytracer.Scene;
 import com.elevenetc.raytracer.SceneBuilder;
+import com.elevenetc.raytracer.edges.EdgeFactories;
 import com.elevenetc.raytracer.shapes.Path;
 
 public class Scenes {
@@ -24,6 +27,7 @@ public class Scenes {
 
         return new SceneBuilder(width, height)
                 .add(new Path.Builder()
+                        .setFactory(EdgeFactories.transparent(Color.GREEN))
                         .add(initX, initY)
                         .append(100, 100)
                         .append(100, 0)

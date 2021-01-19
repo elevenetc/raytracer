@@ -9,6 +9,7 @@ import com.elevenetc.raytracer.debug.CoresViewer;
 import com.elevenetc.raytracer.debug.DebugMenu;
 import com.elevenetc.raytracer.renderers.RenderThread;
 import com.elevenetc.raytracer.views.BackgroundRayTracerView;
+import com.elevenetc.raytracer.views.RealTimeRayTracerView;
 
 
 /**
@@ -16,13 +17,27 @@ import com.elevenetc.raytracer.views.BackgroundRayTracerView;
  */
 
 public class RayTracerActivity extends AppCompatActivity {
-    private BackgroundRayTracerView view;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        view = new RealTimeRayTracerView(this);
-        view = new BackgroundRayTracerView(this);
+        initRealTimeTracer();
+    }
+
+    private void initRealTimeTracer() {
+        RealTimeRayTracerView view = new RealTimeRayTracerView(this);
+        setContentView((View) view);
+
+        new DebugMenu.Builder()
+                .setTitle("RayTracer")
+                .addDivider("Debug settings")
+                .addCheckBox("Scene", false, view::setDebugScene)
+                .addCheckBox("Light", false, view::setDebugLight)
+                .build(this);
+    }
+
+    private void initBackgroundTracer() {
+        BackgroundRayTracerView view = new BackgroundRayTracerView(this);
         setContentView((View) view);
 
         CoresViewer.Binder binder = new CoresViewer.Binder(Runtime.getRuntime().availableProcessors());
@@ -30,24 +45,18 @@ public class RayTracerActivity extends AppCompatActivity {
         view.setCoresListener(new RenderThread.CoresListener() {
             @Override
             public void onStartCore(String coreIdx, long time) {
-
-                view.post(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        binder.updateCore(coreIdx, new CoresViewer.Binder.CoreInfo(CoresViewer.Binder.CoreInfo.State.WORKING, time, -1));
-                    }
-                });
+                view.post(() -> binder.updateCore(
+                        coreIdx,
+                        new CoresViewer.Binder.CoreInfo(CoresViewer.Binder.CoreInfo.State.WORKING, time, -1))
+                );
             }
 
             @Override
             public void onEndCore(String coreIdx, long start, long end) {
-                view.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        binder.updateCore(coreIdx, new CoresViewer.Binder.CoreInfo(CoresViewer.Binder.CoreInfo.State.IDLE, start, end));
-                    }
-                });
+                view.post(() -> binder.updateCore(
+                        coreIdx,
+                        new CoresViewer.Binder.CoreInfo(CoresViewer.Binder.CoreInfo.State.IDLE, start, end))
+                );
             }
         });
 
@@ -58,8 +67,8 @@ public class RayTracerActivity extends AppCompatActivity {
         new DebugMenu.Builder()
                 .setTitle("RayTracer")
                 .addDivider("Debug settings")
-                .addCheckBox("Scene", false, checked -> view.setDebugScene(checked))
-                .addCheckBox("Light", false, checked -> view.setDebugLight(checked))
+                .addCheckBox("Scene", false, view::setDebugScene)
+                .addCheckBox("Light", false, view::setDebugLight)
                 .addView(coresViewer)
                 .build(this);
     }
